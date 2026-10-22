@@ -1,0 +1,33 @@
+name: bot-record-miner
+
+on:
+  schedule:
+    - cron: "0 2 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/create-github-app-token@v1
+        id: app
+        with:
+          app-id: ${{ secrets.TEAM_KB_APP_ID }}
+          private-key: ${{ secrets.TEAM_KB_APP_PRIVATE_KEY }}
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app.outputs.token }}
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --project bot
+      - run: git config user.name team-kb-bot && git config user.email team-kb-bot@users.noreply.github.com
+      - run: uv run --project bot python bot/runner.py record_miner
+        env:
+          TEAM_KB_REPO: ${{ github.workspace }}
+          OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

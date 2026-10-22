@@ -1,0 +1,18 @@
+[project]
+name = "team-kb-core"
+version = "0.1.0"
+description = "team-kb MCP server for the vLLM team knowledge base"
+requires-python = ">=3.12"
+dependencies = [
+    "fastmcp>=2.0",
+    "pyyaml>=6.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
