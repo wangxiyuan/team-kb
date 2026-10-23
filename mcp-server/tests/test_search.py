@@ -42,3 +42,36 @@ def test_default_scope_excludes_records(kb_repo: KBConfig) -> None:
 
     assert search(kb_repo, "needle") == []
     assert search(kb_repo, "needle", scope=["records"])
+
+
+def test_multi_token_query_matches_across_words(kb_repo: KBConfig) -> None:
+    path = kb_repo.docs_dir / "guides" / "kv.md"
+    path.write_text(
+        "# KV\n\nvLLM uses paged attention for KV cache blocks.\n",
+        encoding="utf-8",
+    )
+
+    results = search(kb_repo, "vllm paged attention kv cache", scope=["guides"])
+
+    assert results
+    assert results[0]["path"] == "docs/guides/kv.md"
+
+
+def test_multi_token_query_requires_enough_matches(kb_repo: KBConfig) -> None:
+    path = kb_repo.docs_dir / "guides" / "vllm-only.md"
+    path.write_text("# vLLM\n\nonly vllm here\n", encoding="utf-8")
+
+    results = search(
+        kb_repo,
+        "vllm ascend ima illegal memory access kernel debug",
+        scope=["guides"],
+    )
+
+    assert results == []
+
+
+def test_search_skips_readme(kb_repo: KBConfig) -> None:
+    path = kb_repo.docs_dir / "guides" / "README.md"
+    path.write_text("# guide index\n\nvllm paged attention\n", encoding="utf-8")
+
+    assert search(kb_repo, "vllm paged attention", scope=["guides"]) == []

@@ -16,7 +16,7 @@ uv run python mcp_server.py --repo ~/team-kb
 | 模块 | 职责 |
 |---|---|
 | `kb/config.py` | 仓库路径解析与 scope 映射 |
-| `kb/search.py` | ripgrep 检索，按 scope/tags 过滤 |
+| `kb/search.py` | 分词检索：单词子串、多词打分（阈值 50%） |
 | `kb/sync.py` | pull --rebase、commit、push、pending 队列 |
 | `kb/validate.py` | 读取 `templates/` 并校验 frontmatter、章节与 type |
 | `kb/records.py` | append_record / delete_record（隐私优先，仅 main 分支） |
