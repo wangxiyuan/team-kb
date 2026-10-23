@@ -4,7 +4,7 @@ import json
 import shutil
 import subprocess
 
-from .config import SEARCH_SCOPES, KBConfig
+from .config import DEFAULT_SEARCH_SCOPES, SEARCH_SCOPES, KBConfig
 from .validate import split_document
 
 
@@ -125,7 +125,7 @@ def search(
     tags: list[str] | None = None,
     top_k: int = 10,
 ) -> list[dict]:
-    scope = scope or list(SEARCH_SCOPES)
+    scope = scope or list(DEFAULT_SEARCH_SCOPES)
     unknown = [name for name in scope if name not in SEARCH_SCOPES]
     if unknown:
         raise ValueError(f"unknown scope: {', '.join(unknown)}")

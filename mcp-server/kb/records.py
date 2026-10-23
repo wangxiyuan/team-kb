@@ -6,8 +6,17 @@ from datetime import datetime
 import yaml
 
 from .config import KBConfig
-from .sync import commit_paths, publish_commit
+from .sync import commit_paths, current_branch, publish_commit
 from .validate import validate_record_fields
+
+
+def _ensure_on_base(config: KBConfig, base: str = "main") -> None:
+    branch = current_branch(config)
+    if branch and branch != base:
+        raise RuntimeError(
+            f"records must be written on {base}; current branch is {branch}. "
+            f"Run: git checkout {base}"
+        )
 
 
 def current_author(config: KBConfig) -> str:
@@ -47,6 +56,7 @@ def append_record(
     }
     validate_record_fields(config, fields)
     author = author or current_author(config)
+    _ensure_on_base(config)
 
     date_dir = config.records_dir / now.strftime("%Y/%m")
     date_dir.mkdir(parents=True, exist_ok=True)
@@ -94,6 +104,7 @@ def delete_record(
     owner = str(meta.get("author", ""))
     if author and owner != author:
         raise PermissionError("can only delete your own record")
+    _ensure_on_base(config)
 
     path.unlink()
     commit = commit_paths(config, [path], f"record: delete {relative_path}")

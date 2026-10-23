@@ -20,11 +20,14 @@ def _week_label(now: datetime) -> str:
 
 def _recent_releases(upstream: str, since: datetime) -> list[dict]:
     releases = gh_api(f"repos/{upstream}/releases", {"per_page": "10"})
-    return [
-        item
-        for item in releases
-        if datetime.fromisoformat(item["published_at"].replace("Z", "+00:00")) >= since
-    ]
+    recent = []
+    for item in releases:
+        published = item.get("published_at")
+        if not published:
+            continue
+        if datetime.fromisoformat(published.replace("Z", "+00:00")) >= since:
+            recent.append(item)
+    return recent
 
 
 def _recent_prs(upstream: str, since: datetime) -> list[dict]:

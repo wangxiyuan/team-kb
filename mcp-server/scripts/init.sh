@@ -33,6 +33,8 @@ team-kb initialized.
 
 OpenCode (~/.config/opencode/opencode.jsonc):
 
+  "instructions": ["$REPO_ROOT/ROUTER.md"],
+
   "mcp": {
     "team-kb": {
       "type": "local",
@@ -42,6 +44,9 @@ OpenCode (~/.config/opencode/opencode.jsonc):
       "enabled": true
     }
   }
+
+The instructions entry is required: without it a fresh session sees the MCP
+tools but not the team conventions (when to search, record, propose).
 
 Then restart your agent. Try: "search the team knowledge base for <topic>".
 EOF

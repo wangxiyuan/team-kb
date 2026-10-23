@@ -61,6 +61,13 @@ def validate_document(config: KBConfig, doc_type: str, text: str) -> dict[str, A
     template = load_template(config, doc_type)
     meta, body = split_document(text)
 
+    declared_type = meta.get("type")
+    if declared_type is not None and declared_type != doc_type:
+        raise ValidationError(
+            "TYPE_MISMATCH",
+            f"document declares type={declared_type!r}, expected {doc_type!r}",
+        )
+
     missing_fields = [
         field
         for field in template.get("required_frontmatter", [])

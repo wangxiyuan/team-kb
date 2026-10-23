@@ -88,16 +88,32 @@ team-kb/
 
 | 工具 | 入参 | 返回 | 权限 |
 |---|---|---|---|
-| `search_knowledge` | `query, scope=[guides,community,work,skills,records], tags, top_k` | `[{path,snippet,heading}]` | 读 |
+| `search_knowledge` | `query, scope=[skills,guides,community,work], tags, top_k`（records 需显式指定） | `[{path,snippet,heading}]` + hint | 读 |
 | `read_document` | `path` | `{path,content}`（读 SKILL.md 时 usage+1） | 读 |
 | `list_skills` | `tags?` | `[{name,description,version,owner,usage,stale}]` | 读 |
 | `kb_status` | — | `{local_head,remote_head,ahead,behind,last_sync,pending,bot}` | 读 |
 | `sync_knowledge` | `pull=true,push_pending=true` | `{pulled,pushed,conflicts}` | 读+写 |
 | `append_record` | `task,area,result,content,potential_skill,model?` | `{record_path,commit}` 直推 main | 写(本人) |
 | `delete_record` | `path` | `{deleted}`（仅本人条目） | 写(本人) |
-| `propose_knowledge` | `domain,type,name,files[]` | `{pr_url,branch}` 自动开 PR | 写(PR) |
+| `propose_knowledge` | `domain,type,name,files[]`, `base_branch=main, return_to_base=true` | `{pr_url,branch,returned_to}` 自动开 PR | 写(PR) |
+
+> 创建 PR 后默认切回 `base_branch`，避免后续 `append_record` 误提交到 feature 分支；`records` 只允许在 `main` 写入，否则拒绝并提示。
 
 资源：`team://AGENTS.md`、`team://skills/index`、`team://templates/<type>`。
+
+### 5.1 渐进式披露（Agent 侧）
+
+新会话默认只知道工具名和描述，不知道团队约定。因此分四层注入：
+
+| 层 | 内容 | 载体 | 何时进入上下文 |
+|---|---|---|---|
+| L0 路由 | 何时检索/写入/读模板，约 15 行 | `ROUTER.md`，通过 opencode `instructions` 注入 | 每个会话始终 |
+| L1 工具 | 8 个工具的触发条件 | MCP tool docstring（opencode 自动展示） | 每个会话始终 |
+| L2 索引 | 有哪些 skill、检索入口 | `list_skills` / `search_knowledge` | agent 主动调用 |
+| L3 全文 | 具体 SOP / 指南 | `read_document(path)` | 命中后调用 |
+| L4 模板 | 写入前的格式约束 | `read_document("templates/<type>.md")` | 写之前调用 |
+
+注意：opencode 不会把 MCP resources 自动注入上下文，所以路由必须靠 `instructions` 文件，模板必须靠 `read_document`，不能依赖 `team://` 资源。MCP 工具本身也占上下文，当前 8 个是合理规模，新增工具需谨慎。
 
 ## 6. 同步引擎
 

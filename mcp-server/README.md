@@ -18,9 +18,9 @@ uv run python mcp_server.py --repo ~/team-kb
 | `kb/config.py` | 仓库路径解析与 scope 映射 |
 | `kb/search.py` | ripgrep 检索，按 scope/tags 过滤 |
 | `kb/sync.py` | pull --rebase、commit、push、pending 队列 |
-| `kb/validate.py` | 读取 `templates/` 并校验 frontmatter 与章节 |
-| `kb/records.py` | append_record / delete_record（隐私优先） |
-| `kb/propose.py` | 多文件 bundle 校验 + branch + PR |
+| `kb/validate.py` | 读取 `templates/` 并校验 frontmatter、章节与 type |
+| `kb/records.py` | append_record / delete_record（隐私优先，仅 main 分支） |
+| `kb/propose.py` | 多文件 bundle 校验 + branch + PR，默认完成后切回 base |
 | `kb/index.py` | INDEX.md 生成、skill 元数据与 stale 判定 |
 | `kb/usage.py` | 本地 skill 使用计数（`.kb/usage.json`，不入库） |
 

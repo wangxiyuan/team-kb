@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 SEARCH_SCOPES = ("guides", "community", "work", "skills", "records")
+DEFAULT_SEARCH_SCOPES = ("skills", "guides", "community", "work")
 ARCHIVE_REL = Path("records") / "archive"
 
 

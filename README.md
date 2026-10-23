@@ -18,6 +18,19 @@ bash mcp-server/scripts/init.sh
 # 3. 在 agent 中接入（见下，路径必须用绝对路径）
 ```
 
+### 让 agent 知道何时使用（必做）
+
+在 opencode 配置中加入全局路由文件，否则新会话只看到工具、不知道团队约定：
+
+```jsonc
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": ["/path/to/team-kb/ROUTER.md"]
+}
+```
+
+`ROUTER.md` 是刻意保持简短的“路由层”：只告诉 agent 何时检索、何时写入、去哪里读全文；详细规范按需通过 `read_document` 加载。
+
 ### opencode
 
 `~/.config/opencode/opencode.jsonc`：

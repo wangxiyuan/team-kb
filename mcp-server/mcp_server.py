@@ -46,17 +46,40 @@ def search_knowledge(
     tags: list[str] | None = None,
     top_k: int = 10,
 ) -> dict:
-    """Search the team knowledge base (skills, guides, community, work, records)."""
+    """Search team knowledge before non-trivial vLLM work.
+
+    Call this BEFORE debugging, kernel/serving/CI work, API changes, or design
+    tasks to reuse team SOPs and pitfalls. Default scope is skills/guides/
+    community/work; pass scope=["records"] explicitly for raw work logs.
+    Use read_document(path) afterwards to load the full document.
+    """
     try:
         _auto_pull()
-        return {"results": search(get_config(), query, scope, tags, top_k)}
+        results = search(get_config(), query, scope, tags, top_k)
+        if results:
+            hint = (
+                "Call read_document(path) to load full content. "
+                "Use list_skills() to discover available SOPs."
+            )
+        else:
+            hint = (
+                "No team knowledge found for this query. Do not scan the "
+                "team-kb directory with filesystem tools; continue normal "
+                "investigation, then ask the human whether to record or "
+                "sediment this afterward."
+            )
+        return {"results": results, "hint": hint}
     except Exception as exc:
         return _error(exc)
 
 
 @mcp.tool()
 def read_document(path: str) -> dict:
-    """Read a document from the knowledge base by repository-relative path."""
+    """Read a full knowledge document by repository-relative path.
+
+    Use after search_knowledge, or read templates/<type>.md before authoring
+    docs/skills. Reading a SKILL.md counts as a skill use.
+    """
     try:
         _auto_pull()
         config = get_config()
@@ -74,17 +97,32 @@ def read_document(path: str) -> dict:
 
 @mcp.tool()
 def list_skills(tags: list[str] | None = None) -> dict:
-    """List available skills with metadata and staleness."""
+    """List team SOPs with owner, usage and staleness.
+
+    Use to discover what playbooks exist before inventing a new approach.
+    """
     try:
         _auto_pull()
-        return {"skills": _list_skills(get_config(), tags)}
+        skills = _list_skills(get_config(), tags)
+        hint = (
+            "Use search_knowledge(query, scope=['skills']) then "
+            "read_document(path) to load one."
+            if skills
+            else "No skills yet for this area. Team knowledge has not been "
+            "sedimented here; continue normal investigation."
+        )
+        return {"skills": skills, "hint": hint}
     except Exception as exc:
         return _error(exc)
 
 
 @mcp.tool()
 def kb_status() -> dict:
-    """Report sync state, pending queue and bot health."""
+    """Check local/remote sync state, pending writes and bot health.
+
+    Call when knowledge looks stale, before a write, or to inspect the
+    offline pending queue.
+    """
     try:
         config = get_config()
         ahead, behind = ahead_behind(config)
@@ -113,7 +151,11 @@ def kb_status() -> dict:
 
 @mcp.tool()
 def sync_knowledge(pull: bool = True, push_pending: bool = True) -> dict:
-    """Pull remote knowledge and flush queued writes."""
+    """Pull latest knowledge and flush queued writes.
+
+    Use when kb_status shows behind>0 or pending entries, or before reading
+    after a long idle period.
+    """
     try:
         return sync(get_config(), pull_remote=pull, push_pending=push_pending)
     except Exception as exc:
@@ -129,7 +171,12 @@ def append_record(
     potential_skill: bool = False,
     model: str = "",
 ) -> dict:
-    """Append a consented work record. Only call after the human agrees."""
+    """Append a consented work record. Records are OPT-IN.
+
+    Only call after the human explicitly agrees. Record work results only
+    (task/area/result/content); never include prompts, chat history, personal
+    context, secrets or credentials. Requires the local repo to be on main.
+    """
     try:
         config = get_config()
         _auto_pull()
@@ -149,7 +196,10 @@ def append_record(
 
 @mcp.tool()
 def delete_record(path: str) -> dict:
-    """Delete one of your own records."""
+    """Delete one of the current user's own records.
+
+    Only works for records authored by the current git identity, on main.
+    """
     try:
         config = get_config()
         return _delete_record(config, path, author=current_author(config))
@@ -163,13 +213,27 @@ def propose_knowledge(
     type: str,
     name: str,
     files: list[dict],
+    base_branch: str = "main",
+    return_to_base: bool = True,
 ) -> dict:
-    """Validate and open a PR for a new skill or doc. files = [{path, content}]."""
+    """Validate and open a PR for a reusable skill or doc.
+
+    Call when the human asks to save a reusable method, pitfall, guide or
+    digest. files = [{path, content}]. Read templates/<type>.md first; the
+    server rejects missing frontmatter/sections. Returns the PR URL and, by
+    default, switches the local repo back to base_branch.
+    """
     try:
         config = get_config()
         _auto_pull()
         return _propose_knowledge(
-            config, domain=domain, doc_type=type, name=name, files=files
+            config,
+            domain=domain,
+            doc_type=type,
+            name=name,
+            files=files,
+            base_branch=base_branch,
+            return_to_base=return_to_base,
         )
     except Exception as exc:
         return _error(exc)

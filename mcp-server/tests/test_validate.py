@@ -55,6 +55,13 @@ def test_unknown_type_rejected(kb_repo: KBConfig) -> None:
     assert excinfo.value.code == "UNKNOWN_TYPE"
 
 
+def test_type_mismatch_rejected(kb_repo: KBConfig) -> None:
+    wrong = VALID_SKILL.replace("tags: [demo]", "tags: [demo]\ntype: pitfall")
+    with pytest.raises(ValidationError) as excinfo:
+        validate_document(kb_repo, "skill", wrong)
+    assert excinfo.value.code == "TYPE_MISMATCH"
+
+
 def test_record_fields_required(kb_repo: KBConfig) -> None:
     validate_record_fields(
         kb_repo,

@@ -29,3 +29,16 @@ def test_search_filters_by_tags(kb_repo: KBConfig) -> None:
 
     assert search(kb_repo, "needle", scope=["guides"], tags=["kernel"])
     assert search(kb_repo, "needle", scope=["guides"], tags=["serving"]) == []
+
+
+def test_default_scope_excludes_records(kb_repo: KBConfig) -> None:
+    path = kb_repo.records_dir / "2026" / "10" / "22-tester-1.md"
+    path.parent.mkdir(parents=True)
+    path.write_text(
+        "---\ntime: 2026-10-22T10:00:00+08:00\ntask: needle\n"
+        "area: ci\nresult: done\npotential_skill: false\n---\n\nneedle\n",
+        encoding="utf-8",
+    )
+
+    assert search(kb_repo, "needle") == []
+    assert search(kb_repo, "needle", scope=["records"])

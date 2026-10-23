@@ -48,6 +48,13 @@ def head(config: KBConfig) -> str | None:
     return completed.stdout.strip() if completed.returncode == 0 else None
 
 
+def current_branch(config: KBConfig) -> str | None:
+    completed = git(config, "rev-parse", "--abbrev-ref", "HEAD", check=False)
+    if completed.returncode != 0:
+        return None
+    return completed.stdout.strip()
+
+
 def remote_head(config: KBConfig, branch: str = "main") -> str | None:
     completed = git(config, "rev-parse", f"origin/{branch}", check=False)
     return completed.stdout.strip() if completed.returncode == 0 else None

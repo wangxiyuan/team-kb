@@ -57,6 +57,7 @@ def propose_knowledge(
     name: str,
     files: list[dict],
     base_branch: str = "main",
+    return_to_base: bool = True,
 ) -> dict:
     targets = _target_files(config, domain, doc_type, name, files)
 
@@ -108,4 +109,14 @@ def propose_knowledge(
     if completed.returncode != 0:
         raise RuntimeError(completed.stderr.strip() or "gh pr create failed")
 
-    return {"pr_url": completed.stdout.strip().splitlines()[-1], "branch": branch}
+    returned_to = None
+    if return_to_base:
+        checkout = git(config, "checkout", base_branch, check=False)
+        if checkout.returncode == 0:
+            returned_to = base_branch
+
+    return {
+        "pr_url": completed.stdout.strip().splitlines()[-1],
+        "branch": branch,
+        "returned_to": returned_to,
+    }

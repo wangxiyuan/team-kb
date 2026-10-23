@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import pytest
 from kb.config import KBConfig
 from kb.records import append_record, delete_record
-from kb.sync import commit_paths, publish_commit
+from kb.sync import commit_paths, git, publish_commit
 
 
 def test_commit_and_push(kb_repo_with_origin: KBConfig) -> None:
@@ -15,6 +16,19 @@ def test_commit_and_push(kb_repo_with_origin: KBConfig) -> None:
     result = publish_commit(kb_repo_with_origin, commit)
     assert result["pushed"] is True
     assert result["queued"] is False
+
+
+def test_append_record_rejects_feature_branch(kb_repo: KBConfig) -> None:
+    git(kb_repo, "checkout", "-b", "kb/guide/example")
+
+    with pytest.raises(RuntimeError, match="current branch"):
+        append_record(
+            kb_repo,
+            task="should fail",
+            area="ci",
+            result="done",
+            content="branch guard",
+        )
 
 
 def test_append_record_creates_file(kb_repo: KBConfig) -> None:
